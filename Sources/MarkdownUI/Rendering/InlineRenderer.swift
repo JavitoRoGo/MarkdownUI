@@ -51,7 +51,7 @@ struct InlineRenderer {
 
         case .strikethrough(let children):
             // Implementation for strikethrough attribute
-            var attributed = render(children)
+            let attributed = render(children)
             // We would add a custom attribute or use standard ones if available in the OS version
             return attributed
 

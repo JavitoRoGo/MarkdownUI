@@ -9,7 +9,7 @@
 import Foundation
 
 /// The interface for the Markdown parsing engine.
-public protocol MarkdownParsing {
+public protocol MarkdownParsing: Sendable {
     func parse(_ markdown: String) async throws -> MarkdownContent
 }
 

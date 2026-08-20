@@ -62,3 +62,19 @@ extension EnvironmentValues {
 		set { self[MarkdownThemeKey.self] = newValue }
 	}
 }
+
+/// A key for controlling whether block elements should use tight spacing
+/// or standard spacing within the Markdown renderer.
+private struct TightSpacingKey: EnvironmentKey {
+	/// The default value when no value is provided in the environment.
+	static let defaultValue: Bool = true
+}
+
+extension EnvironmentValues {
+	/// A user-controlled value to toggle between tight and loose vertical spacing
+	/// for block elements in MarkdownUI.
+	public var tightSpacingEnabled: Bool {
+		get { self[TightSpacingKey.self] }
+		set { self[TightSpacingKey.self] = newValue }
+	}
+}

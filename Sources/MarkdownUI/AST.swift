@@ -72,7 +72,7 @@ public struct Table {
 }
 
 /// Represents text-level elements.
-public indirect enum InlineNode {
+public indirect enum InlineNode: Hashable {
     case text(String)
     case softBreak
     case lineBreak
@@ -83,4 +83,13 @@ public indirect enum InlineNode {
     case strikethrough([InlineNode]) // e.g., ~~strikethrough~~
     case link(url: URL, title: String?, [InlineNode])
     case image(url: URL, altText: String, destination: URL?)
+}
+
+extension Table.TableCell: Hashable {
+	public static func == (lhs: Table.TableCell, rhs: Table.TableCell) -> Bool {
+		lhs.content == rhs.content
+	}
+	public func hash(into hasher: inout Hasher) {
+		hasher.combine(content)
+	}
 }

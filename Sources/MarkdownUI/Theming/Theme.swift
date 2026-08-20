@@ -89,3 +89,24 @@ extension EnvironmentValues {
 		set { self[BaseURLKey.self] = newValue }
 	}
 }
+
+/// An internal key to allow overriding specific text styles within a view hierarchy.
+private struct MarkdownOverrideTextStyleKey: EnvironmentKey {
+	static let defaultValue: [TextStyleType: MarkdownTextStyle] = [:]
+}
+
+/// Defines the types of inline elements that can be overridden.
+public enum TextStyleType: Hashable, Sendable {
+	case strong
+	case emphasis
+	case link
+	case code
+}
+
+extension EnvironmentValues {
+	/// Allows overriding specific inline text styles within a sub-hierarchy.
+	public var markdownTextStyleOverride: [TextStyleType: MarkdownTextStyle] {
+		get { self[MarkdownOverrideTextStyleKey.self] }
+		set { self[MarkdownOverrideTextStyleKey.self] = newValue }
+	}
+}

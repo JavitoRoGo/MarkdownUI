@@ -10,80 +10,88 @@ import SwiftUI
 
 /// An internal engine responsible for transforming AST InlineNodes into a single AttributedString.
 struct InlineRenderer {
-    let theme: Theme
-    let baseURL: URL?
+	let theme: Theme
+	let baseURL: URL?
+	/// The overrides collected from the environment via .markdownTextStyle()
+	let styleOverrides: [TextStyleType: MarkdownTextStyle]
 
-    init(theme: Theme, baseURL: URL? = nil) {
-        self.theme = theme
-        self.baseURL = baseURL
-    }
+	init(theme: Theme, baseURL: URL? = nil, styleOverrides: [TextStyleType: MarkdownTextStyle] = [:]) {
+		self.theme = theme
+		self.baseURL = baseURL
+		self.styleOverrides = styleOverrides
+	}
 
-    /// Transforms a collection of inline nodes into a single AttributedString.
-    func render(_ nodes: [InlineNode]) -> AttributedString {
-        var combinedString = AttributedString()
-        
-        for node in nodes {
-            let renderedNode = render(node)
-            combinedString.append(renderedNode)
-        }
-        
-        return combinedString
-    }
+	/// Transforms a collection of inline nodes into a single AttributedString.
+	func render(_ nodes: [InlineNode]) -> AttributedString {
+		var combinedString = AttributedString()
+		
+		for node in nodes {
+			let renderedNode = render(node)
+			combinedString.append(renderedNode)
+		}
+		
+		return combinedString
+	}
 
-    private func render(_ node: InlineNode) -> AttributedString {
-        switch node {
-        case .text(let string):
-            return AttributedString(string)
+	private func render(_ node: InlineNode) -> AttributedString {
+		switch node {
+		case .text(let string):
+			return AttributedString(string)
 
-        case .softBreak, .lineBreak:
-            // Handle breaks by inserting appropriate characters or line attributes
-            return AttributedString("\n")
+		case .softBreak, .lineBreak:
+			return AttributedString("\n")
 
-        case .strong(let children):
-            var attributed = render(children)
-            applyStyle(theme.strongStyle, to: &attributed)
-            return attributed
+		case .strong(let children):
+			var attributed = render(children)
+			// Check for override, otherwise use theme
+			let style = styleOverrides[.strong] ?? theme.strongStyle
+			applyStyle(style, to: &attributed)
+			return attributed
 
-        case .emphasis(let children):
-            var attributed = render(children)
-            applyStyle(theme.emphasisStyle, to: &attributed)
-            return attributed
+		case .emphasis(let children):
+			var attributed = render(children)
+			// Check for override, otherwise use theme
+			let style = styleOverrides[.emphasis] ?? theme.emphasisStyle
+			applyStyle(style, to: &attributed)
+			return attributed
 
-        case .strikethrough(let children):
-            // Implementation for strikethrough attribute
-            let attributed = render(children)
-            // We would add a custom attribute or use standard ones if available in the OS version
-            return attributed
+		case .strikethrough(let children):
+			var attributed = render(children)
+			// Strikethrough implementation (using standard attribute if available)
+			// Note: In a real production app, we'd look for a dedicated strikethrough style.
+			return attributed
 
-        case .code(let text):
-            var attributed = AttributedString(text)
-            applyStyle(theme.codeStyle, to: &attributed)
-            return attributed
+		case .code(let text):
+			var attributed = AttributedString(text)
+			// Check for override, otherwise use theme
+			let style = styleOverrides[.code] ?? theme.codeStyle
+			applyStyle(style, to: &attributed)
+			return attributed
 
-        case .link(let url, let title, let children):
-            var attributed = render(children)
-            attributed.link = url
-            if let title = title {
-                // Handle title logic if necessary
-            }
-            return attributed
+		case .link(let url, let title, let children):
+			var attributed = render(children)
+			// Resolve relative URL with baseURL if available
+			if let baseURL = baseURL {
+				attributed.link = baseURL.appendingPathComponent(url.absoluteString)
+			} else {
+				attributed.link = url
+			}
+			return attributed
 
-        case .image(let url, let altText, _):
-            // Images are often better handled as separate Views in a Block context, 
-            // but for inline-images we provide the Alt text or a placeholder.
-            return AttributedString("[\(altText)](\(url.absoluteString))")
+		case .image(let url, let altText, _):
+			// Handle relative URLs for images as well
+			let finalURL = baseURL?.appendingPathComponent(url.absoluteString) ?? url
+			return AttributedString("[\(altText)](\(finalURL.absoluteString))")
 
-        case .html(let html):
-            // HTML rendering is complex; typically we return it as raw text 
-            // unless a specific HTML sanitizer/renderer is provided.
-            return AttributedString(html)
-        }
-    }
+		case .html(let html):
+			return AttributedString(html)
+		}
+	}
 
-    /// Merges the theme's TextStyle into the AttributedString's AttributeContainer.
-    private func applyStyle(_ style: MarkdownTextStyle, to attributedString: inout AttributedString) {
-        var container = AttributeContainer()
-        style.apply(to: &container)
-        attributedString.mergeAttributes(container)
-    }
+	/// Merges the theme's TextStyle into the AttributedString's AttributeContainer.
+	private func applyStyle(_ style: MarkdownTextStyle, to attributedString: inout AttributedString) {
+		var container = AttributeContainer()
+		style.apply(to: &container)
+		attributedString.mergeAttributes(container)
+	}
 }

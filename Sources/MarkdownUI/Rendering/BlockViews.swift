@@ -51,7 +51,7 @@ struct CodeBlockView: View {
             .font(.system(.body, design: .monospaced))
             .padding()
             .background(Color.gray.opacity(0.1))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -66,21 +66,20 @@ struct ListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            ForEach(0..<items.count, id: \.self) { index in
+            ForEach(Array(items.enumerated()), id: \.offset) { index, item in
                 HStack(alignment: .top) {
-                    markerView(for: items[index])
-                    contentView(for: items[index])
+                    markerView(for: item, index: index)
+                    contentView(for: item)
                 }
             }
         }
     }
 
     @ViewBuilder
-    private func markerView(for item: ListItem) -> some View {
-        // This would ideally use the configuration from the theme
+    private func markerView(for item: ListItem, index: Int) -> some View {
         switch type {
         case .bulleted: Circle().frame(width: 6, height: 6).padding(.top, 8)
-        case .numbered: Text("\(items.firstIndex(where: {$0.id == item.id}) ?? 0 + 1).")
+        case .numbered: Text("\(index + 1).")
         case .task:
             if item.taskStatus == .checked { Image(systemName: "checkmark.square") }
             else { Image(systemName: "square") }
@@ -89,15 +88,8 @@ struct ListView: View {
 
     @ViewBuilder
     private func contentView(for item: ListItem) -> some View {
-        // Recursively render block content inside list items
-        // (Simplified for now)
-        Text("List Item Content") 
+        BlockSequence(blocks: item.children)
     }
-}
-
-// Extension to allow identifying items in the loop easily
-extension ListItem {
-    var id: UUID { UUID() } // In a real implementation, we'd use stable identifiers from the parser
 }
 
 /// Renders a blockquote element.

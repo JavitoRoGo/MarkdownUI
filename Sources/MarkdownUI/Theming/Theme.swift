@@ -41,11 +41,11 @@ public struct Theme: Sendable {
 			linkStyle: MarkdownTextStyle { },
 			codeStyle: MarkdownTextStyle { },
 			headingStyle: [:],
-			paragraphStyle: AnyBlockStyle(BlockStyle<Void> { _ in EmptyView() }),
-			blockquoteStyle: AnyBlockStyle(BlockStyle<Void> { _ in EmptyView() }),
-			listStyle: AnyBlockStyle(BlockStyle<ListMarkerConfiguration> { _ in EmptyView() }),
-			codeBlockStyle: AnyBlockStyle(BlockStyle<Void> { _ in EmptyView() }),
-			tableStyle: AnyBlockStyle(BlockStyle<Void> { _ in EmptyView() })
+			paragraphStyle: AnyBlockStyle(BlockStyle<Void> { _, content in content }),
+			blockquoteStyle: AnyBlockStyle(BlockStyle<Void> { _, content in content }),
+			listStyle: AnyBlockStyle(BlockStyle<ListMarkerConfiguration> { _, content in content }),
+			codeBlockStyle: AnyBlockStyle(BlockStyle<Void> { _, content in content }),
+			tableStyle: AnyBlockStyle(BlockStyle<Void> { _, content in content })
 		)
 	}()
 }

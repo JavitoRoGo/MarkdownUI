@@ -7,37 +7,39 @@
 
 import SwiftUI
 
-/// A style for a block element that accepts a configuration object to produce a view.
-public struct BlockStyle<Configuration>: Sendable where Configuration: Sendable {
-	private let _makeView: @Sendable (Configuration) -> AnyView
+/// A style for a block element that can wrap the block's rendered content.
+public struct BlockStyle<Configuration>: @unchecked Sendable where Configuration: Sendable {
+    private let _makeView: (Configuration, AnyView) -> AnyView
 
-	public init(@ViewBuilder _ makeView: @escaping @Sendable (Configuration) -> some View) {
-		self._makeView = { config in AnyView(makeView(config)) }
-	}
+    public init(@ViewBuilder _ makeView: @escaping (Configuration, AnyView) -> some View) {
+        self._makeView = { configuration, content in AnyView(makeView(configuration, content)) }
+    }
 
-	@ViewBuilder
-	public func makeView(with configuration: Configuration) -> some View {
-		_makeView(configuration)
-	}
+    public init(@ViewBuilder _ makeView: @escaping (Configuration) -> some View) {
+        self._makeView = { configuration, _ in AnyView(makeView(configuration)) }
+    }
+
+    @ViewBuilder
+    public func makeView(with configuration: Configuration, content: AnyView) -> some View {
+        _makeView(configuration, content)
+    }
 }
 
 /// A type-erased version of BlockStyle to allow storage in a heterogeneous Theme.
-public struct AnyBlockStyle: Sendable {
-	private let _makeView: @Sendable (Any) -> AnyView
+public struct AnyBlockStyle: @unchecked Sendable {
+    private let _makeView: (Any, AnyView) -> AnyView
 
-	internal init<Configuration>(_ style: BlockStyle<Configuration>) where Configuration: Sendable {
-		self._makeView = { config in
-			guard let typedConfig = config as? Configuration else {
-				fatalError("MarkdownUI: Invalid configuration type passed to BlockStyle")
-			}
-			// We explicitly wrap the 'some View' result into an 'AnyView'
-			// to match the expected return type of the @Sendable closure.
-			return AnyView(style.makeView(with: typedConfig))
-		}
-	}
+    internal init<Configuration>(_ style: BlockStyle<Configuration>) where Configuration: Sendable {
+        self._makeView = { configuration, content in
+            guard let typedConfiguration = configuration as? Configuration else {
+                fatalError("MarkdownUI: Invalid configuration type passed to BlockStyle")
+            }
+            return AnyView(style.makeView(with: typedConfiguration, content: content))
+        }
+    }
 
-	@ViewBuilder
-	internal func makeView(with configuration: Any) -> some View {
-		_makeView(configuration)
-	}
+    @ViewBuilder
+    internal func makeView(with configuration: Any, content: AnyView) -> some View {
+        _makeView(configuration, content)
+    }
 }

@@ -2,8 +2,7 @@ import SwiftUI
 
 /// The primary entry point for rendering Markdown in SwiftUI.
 public struct MarkdownView: View {
-	// We use a private state to hold the parsed content so the view
-	// doesn't re-render its entire body unless the AST actually changes.
+	// El estado debe ser gestionado únicamente por el ciclo de vida de la vista.
 	@State private var parsedContent: MarkdownContent?
 	
 	private let rawString: String?
@@ -14,16 +13,15 @@ public struct MarkdownView: View {
 	@Environment(\.baseURL) private var baseURL
 	@Environment(\.markdownTextStyleOverride) private var styleOverrides
 
-	// 1. Static Initializer (Existing)
-	public init(_ markdown: String, parser: MarkdownParsing = GFMParser()) async throws {
+	// 1. Static Initializer (Síncrono para evitar problemas de @State en init)
+	public init(_ markdown: String, parser: MarkdownParsing = GFMParser()) {
 		self.rawString = markdown
 		self.streamingString = nil
 		self.parser = parser
-		let content = try await parser.parse(markdown)
-		self.parsedContent = content
+		self.parsedContent = nil
 	}
 
-	// 2. DSL Initializer (Existing)
+	// 2. DSL Initializer
 	public init(@MarkdownContentBuilder _ content: () -> [BlockNode]) {
 		self.rawString = nil
 		self.streamingString = nil
@@ -31,8 +29,7 @@ public struct MarkdownView: View {
 		self.parsedContent = MarkdownContent(blocks: content())
 	}
 
-	// 3. NEW: Streaming Initializer for LLMs
-	/// Initializes the view with a binding to a string that changes over time (e.s. from an LLM).
+	// 3. Streaming Initializer
 	public init(streaming text: Binding<String>, parser: MarkdownParsing = GFMParser()) {
 		self.rawString = nil
 		self.streamingString = text
@@ -55,43 +52,40 @@ public struct MarkdownView: View {
 					.environment(\.baseURL, baseURL)
 					.environment(\.markdownTextStyleOverride, styleOverrides)
 			} else {
-				// Show a placeholder or empty state while the first parse happens
-				Color.clear
+				// Ahora esto solo aparecerá mientras el .task está trabajando
+				ContentUnavailableView("Cargando...", systemImage: "magnifyingglass")
 			}
 		}
-		// Observe the streaming string and trigger updates
 		.onChange(of: streamingString?.wrappedValue ?? "") { _, newValue in
 			handleStreamingUpdate(newValue)
 		}
 		.task {
-			// Initial load for static strings
+			// Centralizamos toda la lógica de carga inicial aquí.
+			// Esto garantiza que el @State se actualice correctamente en el MainActor.
 			if let initial = rawString {
-				do {
-					self.parsedContent = try await parser.parse(initial)
-				} catch {
-					print("MarkdownUI: Failed to parse initial string: \(error)")
-				}
+				await performParse(initial)
+			} else if let initialStreamingValue = streamingString?.wrappedValue, !initialStreamingValue.isEmpty {
+				await performParse(initialStreamingValue)
 			}
+		}
+	}
+
+	/// Método privado para centralizar el parseo y evitar duplicidad de lógica
+	private func performParse(_ text: String) async {
+		do {
+			let content = try await parser.parse(text)
+			await MainActor.run {
+				self.parsedContent = content
+			}
+		} catch {
+			print("MarkdownUI: Parse error: \(error)")
 		}
 	}
 
 	/// Manages the parsing lifecycle for streaming content.
 	private func handleStreamingUpdate(_ text: String) {
-		// We use a Task to perform the parsing off the main thread.
 		Task {
-			do {
-				// In a production version, we would implement a debounce here
-				// using a Task.sleep or a Combine debouncer to prevent
-				// overwhelming the CPU during high-speed token arrival.
-				let newContent = try await parser.parse(text)
-				
-				// Only update if the content actually changed to avoid unnecessary re-renders
-				await MainActor.run {
-					self.parsedContent = newContent
-				}
-			} catch {
-				print("MarkdownUI: Streaming parse error: \(error)")
-			}
+			await performParse(text)
 		}
 	}
 }

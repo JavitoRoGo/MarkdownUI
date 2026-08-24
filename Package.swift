@@ -9,7 +9,6 @@ let package = Package(
 		.macOS(.v15), .iOS(.v18)
 	],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "MarkdownUI",
             targets: ["MarkdownUI"]
@@ -18,8 +17,6 @@ let package = Package(
 		.package(url: "https://github.com/swiftlang/swift-markdown.git", branch: "main"),
 	],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "MarkdownUI",
 			dependencies: [

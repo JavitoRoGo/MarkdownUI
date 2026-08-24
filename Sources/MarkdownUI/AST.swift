@@ -7,7 +7,6 @@
 
 import Foundation
 
-/// The root structure containing the parsed Markdown content.
 public struct MarkdownContent {
     public let blocks: [BlockNode]
 
@@ -16,7 +15,6 @@ public struct MarkdownContent {
     }
 }
 
-/// Represents structural elements in the Markdown document.
 public indirect enum BlockNode {
     case blockquote([BlockNode])
     case bulletedList([ListItem])
@@ -38,7 +36,6 @@ public indirect enum BlockNode {
     }
 }
 
-/// Represents an item within a list.
 public struct ListItem {
     public let taskStatus: TaskStatus?
     public let children: [BlockNode]
@@ -54,15 +51,12 @@ public struct ListItem {
     }
 }
 
-/// Represents a table structure for GFM.
 public struct Table {
     public let header: [TableCell]
     public let rows: [[TableCell]]
 
     public struct TableCell {
         public let content: [InlineNode]
-        // In GFM, cells can have alignment (left, center, right)
-        // This would be expanded in the parser logic.
     }
 
     public init(header: [TableCell], rows: [[TableCell]]) {
@@ -71,16 +65,15 @@ public struct Table {
     }
 }
 
-/// Represents text-level elements.
 public indirect enum InlineNode: Hashable {
     case text(String)
     case softBreak
     case lineBreak
     case code(String)
     case html(String)
-    case emphasis([InlineNode]) // e.g., *italic*
-    case strong([InlineNode])   // e.g., **bold**
-    case strikethrough([InlineNode]) // e.g., ~~strikethrough~~
+    case emphasis([InlineNode])
+    case strong([InlineNode])
+    case strikethrough([InlineNode])
     case link(url: URL, title: String?, [InlineNode])
     case image(url: URL, altText: String, destination: URL?)
 }

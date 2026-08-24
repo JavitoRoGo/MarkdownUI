@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// The main container that iterates through BlockNodes and manages layout spacing.
 struct BlockSequence: View {
     let blocks: [BlockNode]
     @Environment(\.markdownTheme) var theme
@@ -62,7 +61,6 @@ struct BlockSequence: View {
     }
 }
 
-/// Helper to apply the type-erased block style while preserving the original content.
 extension View {
     @ViewBuilder
     func applyBlockStyle(_ style: AnyBlockStyle) -> some View {
@@ -70,7 +68,6 @@ extension View {
     }
 }
 
-/// Overload specifically for list styles that require ListMarkerConfiguration.
 extension View {
     @ViewBuilder
     func applyListStyle(_ style: AnyBlockStyle) -> some View {

@@ -1,7 +1,6 @@
 import Foundation
 import cmark_gfm
 
-/// A private utility to handle the low-level conversion from C nodes to Swift AST.
 internal struct GFMBridge {
 	
 	func transform(root: UnsafeMutablePointer<cmark_node>) -> MarkdownContent {
@@ -47,12 +46,10 @@ internal struct GFMBridge {
 			return .thematicBreak
 
 		} else {
-			// Fallback: Si es un nodo de texto directo que no está en un párrafo (raro pero posible)
 			if type == CMARK_NODE_TEXT {
 				let text = getString(from: cmark_node_get_literal(node))
 				return .paragraph([.text(text)])
 			}
-			// Si es cualquier otra cosa, intentamos ver si tiene hijos (como un bloque desconocido)
 			let children = parseChildren(node)
 			return children.isEmpty ? .thematicBreak : .paragraph(parseInlines(node)) 
 		}
@@ -62,7 +59,7 @@ internal struct GFMBridge {
 
 	private func parseInlines(_ node: UnsafeMutablePointer<cmark_node>) -> [InlineNode] {
 		var inlines: [InlineNode] = []
-		var currentChild = cmark_node_first_child(node) // CAMBIO: Usar first_child en lugar de next para inlines
+		var currentChild = cmark_node_first_child(node)
 		while let child = currentChild {
 			inlines.append(parseInline(child))
 			currentChild = cmark_node_next(child)
@@ -91,8 +88,6 @@ internal struct GFMBridge {
 			return .link(url: url, title: nil, parseInlines(node))
 
 		default:
-			// Si es un nodo que no conocemos o no tiene contenido de texto directo, 
-			// intentamos tratar sus hijos como inlines.
 			let children = parseInlines(node)
 			return children.first ?? .text("")
 		}
@@ -127,9 +122,7 @@ internal struct GFMBridge {
 	}
 
 	private func isTaskList(_ items: [ListItem]) -> Bool {
-		// Nota: La lógica de TaskList depende de que el parser identifique correctamente 
-		// la tarea en los nodos hijos.
-		return false // Simplificación para evitar errores hasta implementar check de taskStatus
+		return false
 	}
 
 	private func extractLanguage(from node: UnsafeMutablePointer<cmark_node>) -> String? {

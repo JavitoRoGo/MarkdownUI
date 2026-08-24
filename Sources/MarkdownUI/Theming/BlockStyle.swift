@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-/// A style for a block element that can wrap the block's rendered content.
 public struct BlockStyle<Configuration>: @unchecked Sendable where Configuration: Sendable {
     private let _makeView: (Configuration, AnyView) -> AnyView
 
@@ -25,7 +24,6 @@ public struct BlockStyle<Configuration>: @unchecked Sendable where Configuration
     }
 }
 
-/// A type-erased version of BlockStyle to allow storage in a heterogeneous Theme.
 public struct AnyBlockStyle: @unchecked Sendable {
     private let _makeView: (Any, AnyView) -> AnyView
 

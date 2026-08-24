@@ -8,11 +8,9 @@
 
 import SwiftUI
 
-/// An internal engine responsible for transforming AST InlineNodes into a single AttributedString.
 struct InlineRenderer {
 	let theme: Theme
 	let baseURL: URL?
-	/// The overrides collected from the environment via .markdownTextStyle()
 	let styleOverrides: [TextStyleType: MarkdownTextStyle]
 
 	init(theme: Theme, baseURL: URL? = nil, styleOverrides: [TextStyleType: MarkdownTextStyle] = [:]) {
@@ -21,7 +19,6 @@ struct InlineRenderer {
 		self.styleOverrides = styleOverrides
 	}
 
-	/// Transforms a collection of inline nodes into a single AttributedString.
 	func render(_ nodes: [InlineNode]) -> AttributedString {
 		var combinedString = AttributedString()
 		
@@ -43,34 +40,30 @@ struct InlineRenderer {
 
 		case .strong(let children):
 			var attributed = render(children)
-			// Check for override, otherwise use theme
+			applyPresentationIntent(.stronglyEmphasized, to: &attributed)
 			let style = styleOverrides[.strong] ?? theme.strongStyle
 			applyStyle(style, to: &attributed)
 			return attributed
 
 		case .emphasis(let children):
 			var attributed = render(children)
-			// Check for override, otherwise use theme
+			applyPresentationIntent(.emphasized, to: &attributed)
 			let style = styleOverrides[.emphasis] ?? theme.emphasisStyle
 			applyStyle(style, to: &attributed)
 			return attributed
 
 		case .strikethrough(let children):
-			var attributed = render(children)
-			// Strikethrough implementation (using standard attribute if available)
-			// Note: In a real production app, we'd look for a dedicated strikethrough style.
+			let attributed = render(children)
 			return attributed
 
 		case .code(let text):
 			var attributed = AttributedString(text)
-			// Check for override, otherwise use theme
 			let style = styleOverrides[.code] ?? theme.codeStyle
 			applyStyle(style, to: &attributed)
 			return attributed
 
-		case .link(let url, let title, let children):
+		case .link(let url, _, let children):
 			var attributed = render(children)
-			// Resolve relative URL with baseURL if available
 			if let baseURL = baseURL {
 				attributed.link = baseURL.appendingPathComponent(url.absoluteString)
 			} else {
@@ -79,7 +72,6 @@ struct InlineRenderer {
 			return attributed
 
 		case .image(let url, let altText, _):
-			// Handle relative URLs for images as well
 			let finalURL = baseURL?.appendingPathComponent(url.absoluteString) ?? url
 			return AttributedString("[\(altText)](\(finalURL.absoluteString))")
 
@@ -88,10 +80,17 @@ struct InlineRenderer {
 		}
 	}
 
-	/// Merges the theme's TextStyle into the AttributedString's AttributeContainer.
 	private func applyStyle(_ style: MarkdownTextStyle, to attributedString: inout AttributedString) {
 		var container = AttributeContainer()
 		style.apply(to: &container)
 		attributedString.mergeAttributes(container)
 	}
+	
+	private func applyPresentationIntent(_ intent: InlinePresentationIntent, to attributedString: inout AttributedString) {
+			for run in attributedString.runs {
+				var combinedIntent = run.inlinePresentationIntent ?? []
+				combinedIntent.insert(intent)
+				attributedString[run.range].inlinePresentationIntent = combinedIntent
+			}
+		}
 }

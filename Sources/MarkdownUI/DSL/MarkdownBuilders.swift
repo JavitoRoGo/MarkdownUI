@@ -8,7 +8,6 @@
 
 import Foundation
 
-/// A result builder used to compose a collection of BlockNodes.
 @resultBuilder
 public struct MarkdownContentBuilder {
     public static func buildBlock(_ components: [BlockNode]...) -> [BlockNode] {
@@ -20,7 +19,6 @@ public struct MarkdownContentBuilder {
     }
 }
 
-/// A result builder used to compose a collection of InlineNodes within a block.
 @resultBuilder
 public struct InlineContentBuilder {
     public static func buildBlock(_ components: [InlineNode]...) -> [InlineNode] {
@@ -31,7 +29,6 @@ public struct InlineContentBuilder {
         [expression]
     }
     
-    /// Allows using raw Strings directly in the DSL, e.g., "Hello"
     public static func buildExpression(_ expression: String) -> [InlineNode] {
         [.text(expression)]
     }

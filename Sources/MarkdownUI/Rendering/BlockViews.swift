@@ -8,7 +8,6 @@
 
 import SwiftUI
 
-/// Renders a heading using AttributedString for content.
 struct HeadingView: View {
     let level: BlockNode.HeadingLevel
     let inlines: [InlineNode]
@@ -30,7 +29,6 @@ struct HeadingView: View {
     }
 }
 
-/// Renders a standard paragraph.
 struct ParagraphView: View {
     let inlines: [InlineNode]
     @Environment(\.markdownTheme) var theme
@@ -41,7 +39,6 @@ struct ParagraphView: View {
     }
 }
 
-/// Renders a code block with syntax highlighting capability.
 struct CodeBlockView: View {
     let code: String
     let language: String?
@@ -55,7 +52,6 @@ struct CodeBlockView: View {
     }
 }
 
-/// Renders a list (bulleted, numbered, or task).
 struct ListView: View {
     let items: [ListItem]
     let type: ListType
@@ -92,16 +88,14 @@ struct ListView: View {
     }
 }
 
-/// Renders a blockquote element.
 struct BlockquoteView: View {
 	let children: [BlockNode]
 	@Environment(\.markdownTheme) var theme
 
 	var body: some View {
-		// We use BlockSequence recursively to render the content inside the blockquote
 		BlockSequence(blocks: children)
 			.padding(.leading, 16)
-			.border(Color.gray.opacity(0.2), width: 1) // Visual representation of the quote bar
+			.border(Color.gray.opacity(0.2), width: 1)
 	}
 	
 	@ViewBuilder
@@ -111,14 +105,12 @@ struct BlockquoteView: View {
 	}
 }
 
-/// Renders a GFM table.
 struct TableView: View {
 	let table: Table
 	@Environment(\.markdownTheme) var theme
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 0) {
-			// Header Row
 			HStack {
 				ForEach(table.header, id: \.content) { cell in
 					renderCell(cell)
@@ -128,7 +120,6 @@ struct TableView: View {
 			.font(.headline)
 			.background(Color.gray.opacity(0.1))
 
-			// Data Rows
 			ForEach(table.rows, id: \.self) { row in
 				Divider()
 				HStack {

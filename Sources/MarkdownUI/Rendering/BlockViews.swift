@@ -8,9 +8,15 @@
 
 import SwiftUI
 
+/// A view that renders a Markdown heading.
+///
+/// The font size and weight of the heading are automatically adjusted based on its `level`.
 struct HeadingView: View {
+    /// The hierarchical level of the heading (e.g., h1, h2).
     let level: BlockNode.HeadingLevel
+    /// The inline content to be rendered within the heading.
     let inlines: [InlineNode]
+    
     @Environment(\.markdownTheme) var theme
 
     var body: some View {
@@ -19,6 +25,7 @@ struct HeadingView: View {
             .font(fontForLevel(level))
     }
 
+    /// Maps a `HeadingLevel` to an appropriate SwiftUI `Font`.
     private func fontForLevel(_ level: BlockNode.HeadingLevel) -> Font {
         switch level {
         case .h1: return .title.bold()
@@ -29,8 +36,11 @@ struct HeadingView: View {
     }
 }
 
+/// A view that renders a standard Markdown paragraph.
 struct ParagraphView: View {
+    /// The inline content representing the paragraph text.
     let inlines: [InlineNode]
+    
     @Environment(\.markdownTheme) var theme
 
     var body: some View {
@@ -39,8 +49,11 @@ struct ParagraphView: View {
     }
 }
 
+/// A view that renders a code block with a monospaced font and a distinct background.
 struct CodeBlockView: View {
+    /// The raw text content of the code.
     let code: String
+    /// An optional identifier for the programming language used in the block.
     let language: String?
 
     var body: some View {
@@ -52,10 +65,14 @@ struct CodeBlockView: View {
     }
 }
 
+/// A view that renders Markdown lists (bulleted, numbered, or task lists).
 struct ListView: View {
+    /// The items contained within the list.
     let items: [ListItem]
+    /// The specific type of list being rendered.
     let type: ListType
 
+    /// Defines the visual style of the list markers.
     enum ListType {
         case bulleted, numbered, task
     }
@@ -71,6 +88,7 @@ struct ListView: View {
         }
     }
 
+    /// Provides the appropriate marker (bullet, number, or checkbox) for a list item.
     @ViewBuilder
     private func markerView(for item: ListItem, index: Int) -> some View {
         switch type {
@@ -82,32 +100,33 @@ struct ListView: View {
         }
     }
 
+    /// Renders the content of a list item, which can itself contain multiple block nodes.
     @ViewBuilder
     private func contentView(for item: ListItem) -> some View {
         BlockSequence(blocks: item.children)
     }
 }
 
+/// A view that renders a Markdown blockquote with indentation and visual borders.
 struct BlockquoteView: View {
-	let children: [BlockNode]
-	@Environment(\.markdownTheme) var theme
+    /// The sequence of blocks contained within the blockquote.
+    let children: [BlockNode]
+    
+    @Environment(\.markdownTheme) var theme
 
 	var body: some View {
 		BlockSequence(blocks: children)
 			.padding(.leading, 16)
 			.border(Color.gray.opacity(0.2), width: 1)
 	}
-	
-	@ViewBuilder
-	private func renderCell(_ cell: Table.TableCell) -> some View {
-		let renderer = InlineRenderer(theme: theme)
-		Text(renderer.render(cell.content))
-	}
 }
 
+/// A view that renders a Markdown table with headers and data rows.
 struct TableView: View {
-	let table: Table
-	@Environment(\.markdownTheme) var theme
+    /// The structured data representing the table.
+    let table: Table
+
+    @Environment(\.markdownTheme) var theme
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 0) {
@@ -132,9 +151,10 @@ struct TableView: View {
 		}
 	}
 
+	/// Renders the inline content of an individual table cell.
 	@ViewBuilder
     private func renderCell(_ cell: Table.TableCell) -> some View {
-        let renderer = InlineRenderer(theme: theme)
-        Text(renderer.render(cell.content))
-    }
+		let renderer = InlineRenderer(theme: theme)
+		Text(renderer.render(cell.content))
+	}
 }

@@ -23,7 +23,10 @@ let package = Package(
 				.product(name: "Markdown", package: "swift-markdown"),
 			]
         ),
-
+        .testTarget(
+            name: "MarkdownUITests",
+            dependencies: ["MarkdownUI"]
+        ),
     ],
     swiftLanguageModes: [.v6]
 )

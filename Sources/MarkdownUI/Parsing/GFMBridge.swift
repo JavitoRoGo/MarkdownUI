@@ -102,6 +102,9 @@ internal struct GFMBridge {
 
 	/// Parses a single inline-level node from the C AST into an `InlineNode`.
 	///
+	/// This method parses an inline element (such as text, emphasis, or links) and converts it 
+	/// to its corresponding `InlineNode` instance.
+	///
 	/// - Parameter node: The pointer to the `cmark_node` representing an inline element.
 	/// - Returns: An `InlineNode` instance corresponding to the C node's type and content.
 	private func parseInline(_ node: UnsafeMutablePointer<cmark_node>) -> InlineNode {
@@ -149,21 +152,49 @@ internal struct GFMBridge {
 		return nodes
 	}
 
-	/// Parses the individual items within a list node.
+	/// Parses the individual items within a list node, including detecting task statuses.
 	private func parseListItems(_ node: UnsafeMutablePointer<cmark_node>) -> [ListItem] {
 		var items: [ListItem] = []
 		var currentChild = cmark_node_first_child(node)
 		while let itemNode = currentChild {
 			let children = parseChildren(itemNode)
-			items.append(ListItem(taskStatus: nil, children: children))
+			
+			var status: ListItem.TaskStatus? = nil
+			
+			if let firstInline = findFirstTextNode(in: children) {
+				let text = firstInline
+				if text.contains("[x]") || text.contains("[X]") {
+					status = .checked
+				} else if text.contains("[ ]") {
+					status = .unchecked
+				}
+			}
+
+			items.append(ListItem(taskStatus: status, children: children))
 			currentChild = cmark_node_next(itemNode)
 		}
 		return items
 	}
+    
+    private func findFirstTextNode(in blocks: [BlockNode]) -> String? {
+        for block in blocks {
+            switch block {
+            case .paragraph(let inlines):
+                for inline in inlines {
+                    if case .text(let text) = inline { return text }
+                }
+            default:
+                continue
+            }
+        }
+        return nil
+    }
 
 	/// Determines if a list of items should be treated as a task list.
+	/// A list is considered a task list if all its items have a task status (checked or unchecked).
 	private func isTaskList(_ items: [ListItem]) -> Bool {
-		return false
+		guard !items.isEmpty else { return false }
+		return items.allSatisfy { $0.taskStatus != nil }
 	}
 
 	/// Extracts the language identifier from a code block node's info string.
